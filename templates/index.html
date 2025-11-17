@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Food from the Fridge</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Food from the Fridge 🧊🍳</h1>
+    <p>Upload a photo of your fridge and get recipe ideas!</p>
+
+    <form id="upload-form">
+      <input type="file" id="image-input" name="image" accept="image/*" required />
+      <button type="submit">Analyze</button>
+    </form>
+
+    <div id="status"></div>
+
+    <div id="ingredients-section" class="hidden">
+      <h2>Ingredients</h2>
+      <div id="ingredients-list"></div>
+    </div>
+
+    <div id="recipes-section" class="hidden">
+      <h2>Recipes</h2>
+      <div id="recipes-list"></div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f7f7f7;
+}
+
+.container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.hidden {
+  display: none;
+}
+
+.pill {
+  background: #e3f2fd;
+  padding: 6px 12px;
+  margin: 4px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.recipe-card {
+  background: #fafafa;
+  padding: 16px;
+  border: 1px solid #eee;
+  margin-top: 12px;
+  border-radius: 10px;
+}
