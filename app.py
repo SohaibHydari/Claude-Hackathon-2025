@@ -18,7 +18,6 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# You can override these via env vars if you want
 VISION_MODEL = os.getenv("VISION_MODEL", "gpt-4.1-mini")
 RECIPE_MODEL = os.getenv("RECIPE_MODEL", "gpt-4.1-mini")
 
@@ -27,15 +26,13 @@ RECIPE_MODEL = os.getenv("RECIPE_MODEL", "gpt-4.1-mini")
 
 def _clean_json_text(raw: str) -> str:
     """
-    Strip common wrappers like ```json ... ``` so json.loads() doesn't explode.
+    Strip common wrappers like ```json ... ``` so json.loads() works.
     """
     raw = raw.strip()
     if raw.startswith("```"):
         lines = raw.splitlines()
-        # Drop opening fence
         if lines and lines[0].startswith("```"):
             lines = lines[1:]
-        # Drop closing fence
         if lines and lines[-1].startswith("```"):
             lines = lines[:-1]
         raw = "\n".join(lines).strip()
@@ -44,10 +41,9 @@ def _clean_json_text(raw: str) -> str:
 
 def detect_ingredients(img_bytes):
     """
-    Call an OpenAI vision-capable model to list visible ingredients in the fridge.
-    Returns a cleaned list of ingredient names (lowercase, deduped).
+    Use a vision-capable model to list visible ingredients.
+    Returns a cleaned list of ingredient names.
     """
-    # Encode the image as base64 and send as a data URL
     b64_image = base64.b64encode(img_bytes).decode("utf-8")
 
     prompt = (
@@ -80,9 +76,9 @@ def detect_ingredients(img_bytes):
     raw = response.choices[0].message.content
     raw = _clean_json_text(raw)
 
-    data = json.loads(raw)  # let this raise if bad JSON – front-end will show error
+    data = json.loads(raw)
 
-    # Normalize to a simple list of strings
+    # Allow either a bare list or {"ingredients": [...]}
     if isinstance(data, dict) and "ingredients" in data:
         ingredients = data["ingredients"]
     else:
@@ -91,7 +87,6 @@ def detect_ingredients(img_bytes):
     if not isinstance(ingredients, list):
         raise ValueError("Vision model did not return a list of ingredients")
 
-    # Clean & dedupe
     unique = []
     for ing in ingredients:
         if not isinstance(ing, str):
@@ -105,12 +100,7 @@ def detect_ingredients(img_bytes):
 
 def generate_recipes(ingredients):
     """
-    Call an OpenAI text model to generate recipes using the detected ingredients.
-    Returns a list of recipe dicts with keys:
-      - title
-      - short_description
-      - ingredients_used
-      - steps
+    Generate recipes that use mostly the existing ingredients.
     """
     ingredients_str = ", ".join(ingredients) if ingredients else "nothing obvious"
 
@@ -144,12 +134,7 @@ Respond ONLY in strict JSON with this shape:
 
     response = client.chat.completions.create(
         model=RECIPE_MODEL,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
+        messages=[{"role": "user", "content": prompt}],
     )
 
     raw = response.choices[0].message.content
@@ -160,16 +145,94 @@ Respond ONLY in strict JSON with this shape:
     if not isinstance(recipes, list):
         raise ValueError("Model did not return 'recipes' list in JSON")
 
-    # Optional: light normalization
     normalized = []
     for r in recipes:
         if not isinstance(r, dict):
             continue
         normalized.append(
             {
-                "title": r.get("title", "").strip() or "Untitled Recipe",
-                "short_description": r.get("short_description", "").strip(),
+                "title": (r.get("title") or "").strip() or "Untitled Recipe",
+                "short_description": (r.get("short_description") or "").strip(),
                 "ingredients_used": r.get("ingredients_used", []),
+                "steps": r.get("steps", []),
+            }
+        )
+
+    return normalized
+
+
+def generate_stretch_recipes(ingredients):
+    """
+    Suggest 'almost possible' recipes that require picking up a few extra items
+    from the store.
+
+    Returns a list of dicts:
+      - title
+      - short_description
+      - ingredients_used_from_fridge
+      - extra_ingredients_to_buy
+      - steps
+    """
+    ingredients_str = ", ".join(ingredients) if ingredients else "nothing obvious"
+
+    prompt = f"""
+You are a home cooking coach.
+
+The user currently has these ingredients in their fridge:
+{ingredients_str}
+
+They are willing to make a quick trip to the store to buy a FEW extra items.
+
+Tasks:
+1. Suggest 3 appealing recipes that are ALMOST possible with what they have now,
+   but require up to 3 additional ingredients each.
+2. For each recipe, include:
+   - title
+   - short_description
+   - ingredients_used_from_fridge: which of the existing ingredients are used
+   - extra_ingredients_to_buy: up to 3 additional ingredients they should buy
+   - steps: 4–6 concise numbered steps
+
+Be realistic and try to reuse as many existing ingredients as possible.
+
+Respond ONLY in strict JSON with this shape:
+
+{{
+  "stretch_recipes": [
+    {{
+      "title": "string",
+      "short_description": "string",
+      "ingredients_used_from_fridge": ["string", "..."],
+      "extra_ingredients_to_buy": ["string", "..."],
+      "steps": ["string", "..."]
+    }}
+  ]
+}}
+"""
+
+    response = client.chat.completions.create(
+        model=RECIPE_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = response.choices[0].message.content
+    raw = _clean_json_text(raw)
+
+    data = json.loads(raw)
+    stretch = data.get("stretch_recipes")
+    if not isinstance(stretch, list):
+        raise ValueError("Model did not return 'stretch_recipes' list in JSON")
+
+    normalized = []
+    for r in stretch:
+        if not isinstance(r, dict):
+            continue
+        normalized.append(
+            {
+                "title": (r.get("title") or "").strip() or "Upgraded Recipe Idea",
+                "short_description": (r.get("short_description") or "").strip(),
+                "ingredients_used_from_fridge": r.get("ingredients_used_from_fridge", []),
+                "extra_ingredients_to_buy": r.get("extra_ingredients_to_buy", []),
                 "steps": r.get("steps", []),
             }
         )
@@ -196,32 +259,27 @@ def analyze():
         return jsonify({"error": "Uploaded file is empty"}), 400
 
     try:
-        # 1) Vision: detect ingredients
         ingredients = detect_ingredients(img_bytes)
-
-        # 2) Text: generate recipes
         recipes = generate_recipes(ingredients)
+        stretch_recipes = generate_stretch_recipes(ingredients)
 
         return jsonify(
             {
                 "ingredients": ingredients,
                 "recipes": recipes,
+                "stretch_recipes": stretch_recipes,
             }
         )
 
     except json.JSONDecodeError as e:
-        # Specifically catch JSON parsing issues from the model
         print("JSON parse error from model:", e)
         return (
             jsonify(
-                {
-                    "error": "AI response could not be parsed as JSON. Try again in a moment."
-                }
+                {"error": "AI response could not be parsed as JSON. Try again in a moment."}
             ),
             500,
         )
     except Exception as e:
-        # Generic catch-all so the frontend gets a clean error
         print("Error in /analyze:", repr(e))
         return jsonify({"error": "Something went wrong while analyzing the image."}), 500
 
@@ -229,5 +287,4 @@ def analyze():
 # --- Entrypoint -------------------------------------------------------------
 
 if __name__ == "__main__":
-    # For local dev; in production, use a proper WSGI server
     app.run(debug=True)

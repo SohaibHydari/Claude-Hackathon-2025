@@ -9,27 +9,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 
-    <!-- Your external stylesheet -->
+    <!-- External stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
     <h1>Fridge Roulette</h1>
-    <div class="subtitle">Upload or drop a photo of your fridge — Chef AI will cook up ideas!</div>
+    <div class="subtitle">
+        Upload or drop a photo of your fridge — Chef AI will cook up ideas!
+    </div>
 
-    <div class="dropzone" onclick="document.getElementById('fileInput').click()"
+    <!-- Upload / Dropzone -->
+    <div class="dropzone"
+         onclick="document.getElementById('fileInput').click()"
          ondragover="event.preventDefault()"
          ondrop="handleDrop(event)">
         <div class="dropzone-icon">🥘</div>
         <div>Drag & drop an image here, or click to upload</div>
-        <input type="file" id="fileInput" onchange="handleFile(this)">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this)">
     </div>
 
     <p id="status"></p>
 
+    <!-- Results container -->
     <div id="results" class="results" style="display:none;"></div>
-
 
     <script>
         let selectedFile = null;
@@ -56,6 +60,7 @@
 
             status.textContent = "Analyzing your fridge… 🔍🍳";
             resultsDiv.style.display = "none";
+            resultsDiv.innerHTML = "";
 
             const formData = new FormData();
             formData.append("image", selectedFile);
@@ -64,9 +69,21 @@
                 method: "POST",
                 body: formData
             })
-                .then(response => response.json())
+                .then(response => {
+                    // If backend returns non-200, still try to parse JSON error
+                    return response.json().then(data => {
+                        if (!response.ok) {
+                            throw new Error(data.error || "Server error");
+                        }
+                        return data;
+                    });
+                })
                 .then(data => {
                     status.textContent = "";
+
+                    const ingredients = data.ingredients || [];
+                    const recipes = data.recipes || [];
+                    const stretchRecipes = data.stretch_recipes || [];
 
                     // BUILD THE NEW LAYOUT
                     let html = `
@@ -78,48 +95,116 @@
                             <div class="ingredient-list">
                     `;
 
-                    data.ingredients.forEach(i => {
-                        html += `<div class="ingredient-pill">${i}</div>`;
-                    });
+                    if (ingredients.length === 0) {
+                        html += `<div class="empty-text">We couldn't confidently detect ingredients from this photo.</div>`;
+                    } else {
+                        ingredients.forEach(i => {
+                            html += `<div class="ingredient-pill">${i}</div>`;
+                        });
+                    }
 
                     html += `
                             </div>
                         </div>
 
-                        <!-- RIGHT: RECIPE CARD GRID -->
-                        <div class="recipe-grid">
+                        <!-- RIGHT: MAIN CONTENT (recipes + stretch ideas) -->
+                        <div class="main-right">
                     `;
 
-                    data.recipes.forEach(r => {
-                        html += `
-                            <div class="recipe-card">
-                                <h3>${r.title}</h3>
-                                <p><em>${r.short_description}</em></p>
+                    // === RECIPES YOU CAN MAKE NOW ===
+                    html += `
+                        <div class="recipes-section">
+                            <h2>✅ Recipes You Can Make Now</h2>
+                            <div class="recipe-grid">
+                    `;
 
-                                <strong>Ingredients:</strong>
-                                <ul>
-                                    ${r.ingredients_used.map(x => `<li>${x}</li>`).join("")}
-                                </ul>
+                    if (recipes.length === 0) {
+                        html += `<div class="empty-text">No full recipes could be generated from these ingredients.</div>`;
+                    } else {
+                        recipes.forEach(r => {
+                            html += `
+                                <div class="recipe-card">
+                                    <h3>${r.title}</h3>
+                                    <p><em>${r.short_description}</em></p>
 
-                                <strong>Steps:</strong>
-                                <ol>
-                                    ${r.steps.map(s => `<li>${s}</li>`).join("")}
-                                </ol>
-                            </div>
-                        `;
-                    });
+                                    <strong>Ingredients from your fridge:</strong>
+                                    <ul>
+                                        ${(r.ingredients_used || []).map(x => `<li>${x}</li>`).join("")}
+                                    </ul>
+
+                                    <strong>Steps:</strong>
+                                    <ol>
+                                        ${(r.steps || []).map(s => `<li>${s}</li>`).join("")}
+                                    </ol>
+                                </div>
+                            `;
+                        });
+                    }
 
                     html += `
-                        </div>
-                    </div>
+                            </div> <!-- .recipe-grid -->
+                        </div> <!-- .recipes-section -->
+                    `;
+
+                    // === UPGRADE IDEAS SECTION (stretch_recipes) ===
+                    if (stretchRecipes.length > 0) {
+                        html += `
+                            <div class="stretch-section">
+                                <h2>✨ Upgrade Ideas (Grab a Few Items)</h2>
+                                <p class="stretch-subtitle">
+                                    Pick up 1–3 extra ingredients from the store to unlock these dishes:
+                                </p>
+                                <div class="stretch-grid">
+                        `;
+
+                        stretchRecipes.forEach(r => {
+                            html += `
+                                <div class="stretch-card">
+                                    <h3>${r.title}</h3>
+                                    <p><em>${r.short_description}</em></p>
+
+                                    <strong>Uses from your fridge:</strong>
+                                    <ul>
+                                        ${(r.ingredients_used_from_fridge || [])
+                                            .map(x => `<li>${x}</li>`)
+                                            .join("")}
+                                    </ul>
+
+                                    <strong>Buy at the store:</strong>
+                                    <ul>
+                                        ${(r.extra_ingredients_to_buy || [])
+                                            .map(x => `<li>${x}</li>`)
+                                            .join("")}
+                                    </ul>
+
+                                    <strong>Steps:</strong>
+                                    <ol>
+                                        ${(r.steps || [])
+                                            .map(s => `<li>${s}</li>`)
+                                            .join("")}
+                                    </ol>
+                                </div>
+                            `;
+                        });
+
+                        html += `
+                                </div> <!-- .stretch-grid -->
+                            </div> <!-- .stretch-section -->
+                        `;
+                    }
+
+                    // Close main-right + results-grid
+                    html += `
+                        </div> <!-- .main-right -->
+                    </div> <!-- .results-grid -->
                     `;
 
                     resultsDiv.innerHTML = html;
                     resultsDiv.style.display = "block";
                 })
                 .catch(err => {
-                    status.textContent = "Error analyzing the image.";
                     console.error(err);
+                    status.textContent = "Error analyzing the image: " + err.message;
                 });
         }
     </script>

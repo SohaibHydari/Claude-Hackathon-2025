@@ -87,6 +87,20 @@ h1 {
     gap: 40px;
 }
 
+/* RIGHT SIDE WRAPPER */
+.main-right {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Helpful generic text */
+.empty-text {
+    font-size: 14px;
+    color: #7b5b3a;
+    font-style: italic;
+}
+
 /* INGREDIENT SIDEBAR */
 .ingredients-box {
     background: #fffefb;
@@ -116,7 +130,15 @@ h1 {
     font-weight: 500;
 }
 
-/* RECIPE GRID */
+/* ============================
+   RECIPES YOU CAN MAKE NOW
+============================ */
+.recipes-section h2 {
+    font-size: 24px;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
 .recipe-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -141,8 +163,75 @@ h1 {
     margin: 5px 0 10px;
 }
 
-.recipe-card ul, .recipe-card ol {
+.recipe-card ul,
+.recipe-card ol {
     margin: 5px 0 10px 20px;
+}
+
+/* ============================
+   STRETCH / UPGRADE RECIPES
+============================ */
+.stretch-section {
+    background: #fffaf0;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #f0d4aa;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+
+.stretch-section h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 22px;
+}
+
+.stretch-subtitle {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #7b5b3a;
+}
+
+.stretch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.stretch-card {
+    background: #fffdf7;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid #f1d5b0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.stretch-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 19px;
+}
+
+.stretch-card p {
+    margin: 5px 0 10px;
+}
+
+.stretch-card ul,
+.stretch-card ol {
+    margin: 5px 0 10px 20px;
+}
+
+/* ============================
+   RESPONSIVE
+============================ */
+@media (max-width: 900px) {
+    .dropzone {
+        width: 90%;
+        height: 260px;
+    }
+
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Fade animation */
