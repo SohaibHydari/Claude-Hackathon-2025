@@ -2,160 +2,177 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Food from the Fridge 🍳</title>
+    <title>Fridge Roulette</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 
     <style>
         body {
-            font-family: "Inter", sans-serif;
             margin: 0;
             padding: 0;
-            background: #f7f5f1 url("https://i.imgur.com/2U4uN4F.png"); /* subtle kitchen icons */
-            background-size: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            width: 600px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-            text-align: center;
-            animation: fadeIn 0.4s ease;
+            font-family: "Inter", sans-serif;
+            background: #fff4e6 url("https://i.imgur.com/6JbypyB.png"); /* kitchen doodle pattern */
+            background-size: 180px;
+            background-attachment: fixed;
         }
 
         h1 {
-            font-size: 36px;
-            font-weight: 700;
+            text-align: center;
+            font-size: 50px;
+            margin-top: 50px;
+            font-family: "Playfair Display", serif;
+            color: #8b3a06;
+            text-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 18px;
+            color: #5f4633;
+            margin-top: 8px;
+            margin-bottom: 35px;
+        }
+
+        .dropzone {
+            width: 70%;
+            height: 320px;
+            margin: 0 auto;
+            background: #fffaf5;
+            border: 4px dashed #d4a574;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #5e3b1e;
+            cursor: pointer;
+            transition: 0.2s ease;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+        }
+
+        .dropzone:hover {
+            background: #fff3e6;
+            border-color: #c07e45;
+        }
+
+        .dropzone-icon {
+            font-size: 70px;
             margin-bottom: 10px;
         }
 
-        p {
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 25px;
-        }
-
-        input[type="file"] {
-            margin-right: 12px;
-        }
-
-        button {
-            padding: 8px 16px;
-            background: #2f7fff;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.15s ease;
-        }
-
-        button:hover {
-            background: #1b65d6;
+        #fileInput {
+            display: none;
         }
 
         #status {
-            margin-top: 20px;
+            text-align: center;
+            margin-top: 25px;
+            font-size: 20px;
+            color: #6d4b2f;
             font-weight: 600;
-            color: #444;
         }
 
         .results {
-            margin-top: 30px;
-            text-align: left;
-            background: #fafafa;
-            padding: 20px;
-            border-radius: 12px;
-            font-size: 15px;
-            line-height: 1.5;
-            border: 1px solid #e5e5e5;
+            width: 70%;
+            margin: 40px auto;
+            background: #fffdf9;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
+            border: 1px solid #edd9c3;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4d331b;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        ul, ol {
+            margin-top: 8px;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
-        <h1>Food from the Fridge 🧊🍳</h1>
-        <p>Upload a photo of your fridge and get recipe ideas instantly!</p>
+    <h1>Fridge Roulette</h1>
+    <div class="subtitle">Upload or drop a photo of your fridge — Chef AI will cook up ideas!</div>
 
-        <input type="file" id="imageInput">
-        <button onclick="analyze()">Analyze</button>
-
-        <p id="status"></p>
-
-        <div id="results" class="results" style="display:none;"></div>
+    <div class="dropzone" onclick="document.getElementById('fileInput').click()"
+         ondragover="event.preventDefault()"
+         ondrop="handleDrop(event)">
+        <div class="dropzone-icon">🥘</div>
+        <div>Drag & drop an image here, or click to upload</div>
+        <input type="file" id="fileInput" onchange="handleFile(this)">
     </div>
 
-    <script>
-        function analyze() {
-            const fileInput = document.getElementById("imageInput");
-            const status = document.getElementById("status");
-            const resultsDiv = document.getElementById("results");
+    <p id="status"></p>
 
-            if (!fileInput.files.length) {
-                alert("Please select an image first!");
+    <div id="results" class="results" style="display:none;"></div>
+
+
+    <script>
+        let selectedFile = null;
+
+        function handleFile(input) {
+            selectedFile = input.files[0];
+            analyze();
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            selectedFile = event.dataTransfer.files[0];
+            analyze();
+        }
+
+        function analyze() {
+            if (!selectedFile) {
+                alert("Please choose an image first.");
                 return;
             }
 
-            status.textContent = "Analyzing…";
+            const status = document.getElementById("status");
+            const resultsDiv = document.getElementById("results");
+
+            status.textContent = "Analyzing your fridge… 🔍🍳";
             resultsDiv.style.display = "none";
 
             const formData = new FormData();
-            formData.append("image", fileInput.files[0]);
+            formData.append("image", selectedFile);
 
             fetch("/analyze", {
                 method: "POST",
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                status.textContent = "";
+                .then(response => response.json())
+                .then(data => {
+                    status.textContent = "";
 
-                let html = "";
+                    let html = `<h2 style="margin-bottom: 15px;">🍅 Ingredients Found</h2><ul>`;
+                    data.ingredients.forEach(i => html += `<li>${i}</li>`);
+                    html += "</ul>";
 
-                html += `<h3>Ingredients Detected:</h3><ul>`;
-                data.ingredients.forEach(i => {
-                    html += `<li>${i}</li>`;
-                });
-                html += "</ul>";
-
-                html += `<h3>Recipes:</h3>`;
-                data.recipes.forEach(r => {
-                    html += `
-                        <div style="margin-bottom:20px;">
-                            <strong>${r.title}</strong><br>
+                    html += `<h2 style="margin-top:30px;">🍽️ Recipes</h2>`;
+                    data.recipes.forEach(r => {
+                        html += `
+                        <div style="margin-bottom:30px;">
+                            <h3>${r.title}</h3>
                             <em>${r.short_description}</em>
-                            <ul>
-                                ${r.ingredients_used.map(x => `<li>${x}</li>`).join("")}
-                            </ul>
-                            <ol>
-                                ${r.steps.map(s => `<li>${s}</li>`).join("")}
-                            </ol>
-                        </div>
-                    `;
-                });
+                            <strong>Ingredients:</strong>
+                            <ul>${r.ingredients_used.map(x => `<li>${x}</li>`).join("")}</ul>
+                            <strong>Steps:</strong>
+                            <ol>${r.steps.map(s => `<li>${s}</li>`).join("")}</ol>
+                        </div>`;
+                    });
 
-                resultsDiv.innerHTML = html;
-                resultsDiv.style.display = "block";
-            })
-            .catch(err => {
-                status.textContent = "Error processing image.";
-                console.error(err);
-            });
+                    resultsDiv.innerHTML = html;
+                    resultsDiv.style.display = "block";
+                })
+                .catch(err => {
+                    status.textContent = "Error analyzing the image.";
+                    console.error(err);
+                });
         }
     </script>
 
