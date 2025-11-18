@@ -1,32 +1,152 @@
+/* ============================
+   GLOBAL / PAGE LAYOUT
+============================ */
 body {
-  font-family: Arial, sans-serif;
-  background: #f7f7f7;
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", sans-serif;
+    background: #fff4e6 url("https://i.imgur.com/6JbypyB.png");
+    background-size: 180px;
+    background-attachment: fixed;
 }
 
-.container {
-  max-width: 700px;
-  margin: 40px auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
+h1 {
+    text-align: center;
+    font-size: 50px;
+    margin-top: 50px;
+    font-family: "Playfair Display", serif;
+    color: #8b3a06;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.1);
 }
 
-.hidden {
-  display: none;
+.subtitle {
+    text-align: center;
+    font-size: 18px;
+    color: #5f4633;
+    margin-top: 8px;
+    margin-bottom: 35px;
 }
 
-.pill {
-  background: #e3f2fd;
-  padding: 6px 12px;
-  margin: 4px;
-  border-radius: 20px;
-  display: inline-block;
+/* ============================
+   DROPZONE
+============================ */
+.dropzone {
+    width: 70%;
+    height: 320px;
+    margin: 0 auto;
+    background: #fffaf5;
+    border: 4px dashed #d4a574;
+    border-radius: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    color: #5e3b1e;
+    cursor: pointer;
+    transition: 0.2s ease;
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+}
+
+.dropzone:hover {
+    background: #fff3e6;
+    border-color: #c07e45;
+}
+
+.dropzone-icon {
+    font-size: 70px;
+    margin-bottom: 10px;
+}
+
+#fileInput {
+    display: none;
+}
+
+#status {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 20px;
+    color: #6d4b2f;
+    font-weight: 600;
+}
+
+/* ============================
+   RESULTS SECTION
+============================ */
+.results {
+    width: 90%;
+    margin: 50px auto;
+    animation: fadeIn 0.4s ease;
+    color: #4d331b;
+}
+
+/* Two-column main grid */
+.results-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+}
+
+/* INGREDIENT SIDEBAR */
+.ingredients-box {
+    background: #fffefb;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #ecdac6;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.ingredients-box h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+.ingredient-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ingredient-pill {
+    background: #ffe8cf;
+    border: 1px solid #e0b78a;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* RECIPE GRID */
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 25px;
 }
 
 .recipe-card {
-  background: #fafafa;
-  padding: 16px;
-  border: 1px solid #eee;
-  margin-top: 12px;
-  border-radius: 10px;
+    background: #fffdf8;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #ecd7b7;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.recipe-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 20px;
+}
+
+.recipe-card p {
+    margin: 5px 0 10px;
+}
+
+.recipe-card ul, .recipe-card ol {
+    margin: 5px 0 10px 20px;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

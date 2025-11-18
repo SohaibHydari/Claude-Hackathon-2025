@@ -4,94 +4,13 @@
     <meta charset="UTF-8">
     <title>Fridge Roulette</title>
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: "Inter", sans-serif;
-            background: #fff4e6 url("https://i.imgur.com/6JbypyB.png"); /* kitchen doodle pattern */
-            background-size: 180px;
-            background-attachment: fixed;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 50px;
-            margin-top: 50px;
-            font-family: "Playfair Display", serif;
-            color: #8b3a06;
-            text-shadow: 0 2px 3px rgba(0,0,0,0.1);
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 18px;
-            color: #5f4633;
-            margin-top: 8px;
-            margin-bottom: 35px;
-        }
-
-        .dropzone {
-            width: 70%;
-            height: 320px;
-            margin: 0 auto;
-            background: #fffaf5;
-            border: 4px dashed #d4a574;
-            border-radius: 25px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            color: #5e3b1e;
-            cursor: pointer;
-            transition: 0.2s ease;
-            box-shadow: 0 12px 25px rgba(0,0,0,0.08);
-        }
-
-        .dropzone:hover {
-            background: #fff3e6;
-            border-color: #c07e45;
-        }
-
-        .dropzone-icon {
-            font-size: 70px;
-            margin-bottom: 10px;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        #status {
-            text-align: center;
-            margin-top: 25px;
-            font-size: 20px;
-            color: #6d4b2f;
-            font-weight: 600;
-        }
-
-        .results {
-            width: 70%;
-            margin: 40px auto;
-            background: #fffdf9;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
-            border: 1px solid #edd9c3;
-            font-size: 16px;
-            line-height: 1.6;
-            color: #4d331b;
-        }
-
-        ul, ol {
-            margin-top: 8px;
-        }
-    </style>
+    <!-- Your external stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -149,22 +68,51 @@
                 .then(data => {
                     status.textContent = "";
 
-                    let html = `<h2 style="margin-bottom: 15px;">🍅 Ingredients Found</h2><ul>`;
-                    data.ingredients.forEach(i => html += `<li>${i}</li>`);
-                    html += "</ul>";
+                    // BUILD THE NEW LAYOUT
+                    let html = `
+                    <div class="results-grid">
 
-                    html += `<h2 style="margin-top:30px;">🍽️ Recipes</h2>`;
+                        <!-- LEFT: INGREDIENT PILL BOX -->
+                        <div class="ingredients-box">
+                            <h2>🍅 Ingredients Found</h2>
+                            <div class="ingredient-list">
+                    `;
+
+                    data.ingredients.forEach(i => {
+                        html += `<div class="ingredient-pill">${i}</div>`;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: RECIPE CARD GRID -->
+                        <div class="recipe-grid">
+                    `;
+
                     data.recipes.forEach(r => {
                         html += `
-                        <div style="margin-bottom:30px;">
-                            <h3>${r.title}</h3>
-                            <em>${r.short_description}</em>
-                            <strong>Ingredients:</strong>
-                            <ul>${r.ingredients_used.map(x => `<li>${x}</li>`).join("")}</ul>
-                            <strong>Steps:</strong>
-                            <ol>${r.steps.map(s => `<li>${s}</li>`).join("")}</ol>
-                        </div>`;
+                            <div class="recipe-card">
+                                <h3>${r.title}</h3>
+                                <p><em>${r.short_description}</em></p>
+
+                                <strong>Ingredients:</strong>
+                                <ul>
+                                    ${r.ingredients_used.map(x => `<li>${x}</li>`).join("")}
+                                </ul>
+
+                                <strong>Steps:</strong>
+                                <ol>
+                                    ${r.steps.map(s => `<li>${s}</li>`).join("")}
+                                </ol>
+                            </div>
+                        `;
                     });
+
+                    html += `
+                        </div>
+                    </div>
+                    `;
 
                     resultsDiv.innerHTML = html;
                     resultsDiv.style.display = "block";
