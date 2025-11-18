@@ -1,39 +1,40 @@
 # app.py
 from flask import Flask, render_template, request, jsonify
 import os
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load .env file into environment variables
-load_dotenv()
+load_dotenv()  # Load .env
 
 app = Flask(__name__)
 
-# Read from environment (NOT from code)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY is not set. Did you create a .env file?")
+    raise RuntimeError("OPENAI_API_KEY is not set in your .env file")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-
+# ====== HOME PAGE ======
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
+# ====== MAIN ANALYSIS ENDPOINT ======
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    # Validate image upload
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
     img_file = request.files["image"]
     img_bytes = img_file.read()
 
-    # 1) Call vision model to detect ingredients
+    # Step 1 — Detect ingredients via vision
     ingredients = detect_ingredients(img_bytes)
 
-    # 2) Call LLM to generate recipes
+    # Step 2 — Generate recipes
     recipes = generate_recipes(ingredients)
 
     return jsonify({
@@ -42,123 +43,127 @@ def analyze():
     })
 
 
+# ---------------------------------------------------------
+# 🧠 IMAGE → INGREDIENTS
+# ---------------------------------------------------------
 def detect_ingredients(img_bytes):
-    # ---- Vision model call ----
-    # Pseudocode: adapt to your provider’s API
-    """
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",  # must support images if you're actually doing vision here
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": (
-                        "You are a kitchen assistant. "
-                        "Look carefully at this fridge photo and list visible, usable food ingredients. "
-                        "Return ONLY a JSON array of short ingredient names, e.g. "
-                        '["milk", "eggs", "spinach"].'
-                    )},
-                    {"type": "image", "image": img_bytes}  # exact field depends on the SDK
-                ]
-            }
-        ]
-    )
-    raw = response.choices[0].message.content
-    """
-    # For hackathon demo (no time to parse JSON safely), you can even ask for plain text and split.
-    # But trying JSON is nicer; just catch errors.
+    MOCK_VISION = False  # set True if testing without API
 
-    # MOCK for now (so you can dev the rest without the real call)
-    import json
-    raw = '["milk", "eggs", "cheddar cheese", "spinach"]'
+    if MOCK_VISION:
+        raw = '["milk", "eggs", "spinach", "cheddar cheese"]'
+    else:
+        # --- Actual Vision API Call (Correct Format!) ---
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": (
+                                "Look at this fridge photo and return ONLY a JSON array "
+                                "of visible food ingredients. Example: "
+                                '["milk", "eggs", "cheddar"].'
+                            )
+                        },
+                        {
+                            "type": "input_image",
+                            "image": img_bytes
+                        }
+                    ]
+                }
+            ]
+        )
 
+        raw = response.choices[0].message.content
+
+    # Parse JSON safely
     try:
         ingredients = json.loads(raw)
-    except Exception:
-        # naive fallback: split by commas
+    except:
+        # Fallback: rough split
         ingredients = [x.strip() for x in raw.split(",")]
 
-    # Clean a bit
-    unique = []
-    for ing in ingredients:
-        ing_clean = ing.lower().strip()
-        if ing_clean and ing_clean not in unique:
-            unique.append(ing_clean)
+    # Clean + dedupe
+    cleaned = []
+    for i in ingredients:
+        x = i.lower().strip()
+        if x and x not in cleaned:
+            cleaned.append(x)
 
-    return unique
+    return cleaned
 
 
+# ---------------------------------------------------------
+# 🍳 INGREDIENTS → RECIPES
+# ---------------------------------------------------------
 def generate_recipes(ingredients):
-    # ---- LLM call ----
+    MOCK_LLM = False  # set to True for local testing
+
     ingredients_str = ", ".join(ingredients)
 
-    prompt = f"""
-    You are an inventive home cook assistant.
-
-    User has the following ingredients in their fridge:
-    {ingredients_str}
-
-    1. Suggest 3 simple recipes they can cook using mostly these ingredients.
-    2. For each recipe, return:
-       - title
-       - short_description
-       - ingredients_used (subset of the given ingredients)
-       - steps: 4–6 concise steps
-
-    Respond in strict JSON with this shape:
-    {{
-      "recipes": [
-        {{
-          "title": "...",
-          "short_description": "...",
-          "ingredients_used": ["...", "..."],
-          "steps": ["...", "..."]
-        }}
-      ]
-    }}
-    """
-
-    """
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    raw = response.choices[0].message.content
-    """
-    # MOCK for dev:
-    raw = """
-    {
-      "recipes": [
+    if MOCK_LLM:
+        raw = """
         {
-          "title": "Cheesy Spinach Omelette",
-          "short_description": "A quick breakfast omelette stuffed with spinach and cheddar.",
-          "ingredients_used": ["eggs", "cheddar cheese", "spinach"],
-          "steps": [
-            "Beat the eggs in a bowl.",
-            "Pour into a hot pan and cook until just set.",
-            "Add chopped spinach and grated cheddar on one half.",
-            "Fold, cook another minute, then serve."
+          "recipes": [
+            {
+              "title": "Cheesy Spinach Omelette",
+              "short_description": "A quick breakfast omelette with spinach and cheddar.",
+              "ingredients_used": ["eggs", "spinach", "cheddar cheese"],
+              "steps": [
+                "Beat the eggs.",
+                "Cook in pan until soft.",
+                "Add spinach + cheese.",
+                "Fold and serve."
+              ]
+            }
           ]
         }
-      ]
-    }
-    """
+        """
+    else:
+        prompt = f"""
+        You are a helpful cooking assistant.
 
-    import json
+        The user has these ingredients:
+        {ingredients_str}
+
+        Create exactly 3 simple recipes using mostly these ingredients.
+        Return STRICT JSON in this shape:
+
+        {{
+          "recipes": [
+            {{
+              "title": "...",
+              "short_description": "...",
+              "ingredients_used": ["..."],
+              "steps": ["...", "..."]
+            }}
+          ]
+        }}
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        raw = response.choices[0].message.content
+
     try:
         data = json.loads(raw)
         return data.get("recipes", [])
-    except Exception:
-        # Fallback: return a single very simple recipe if parsing fails
+    except:
+        # Last-resort fallback
         return [{
-            "title": "Freestyle Fridge Scramble",
-            "short_description": "Throw everything in a pan and make a hearty scramble.",
+            "title": "Freestyle Scramble",
+            "short_description": "A simple dish using whatever is available.",
             "ingredients_used": ingredients,
             "steps": [
-                "Chop all ingredients into bite-sized pieces.",
-                "Heat some oil or butter in a pan.",
-                "Add everything and cook until heated through.",
-                "Season to taste and serve."
+                "Chop everything.",
+                "Heat oil in a pan.",
+                "Add ingredients and cook.",
+                "Season and serve."
             ]
         }]
 
