@@ -146,12 +146,24 @@ h1 {
 }
 
 .recipe-card {
-    background: #fffdf8;
-    padding: 20px;
-    border-radius: 20px;
-    border: 1px solid #ecd7b7;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    padding: 22px;
+    border-radius: 18px;
+
+    /* warm parchment gradient fade */
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 244, 230, 0.95),
+        rgba(255, 244, 230, 0.55)
+    );
+
+    border: 1px solid rgba(224, 180, 140, 0.4);
+
+    /* softer shadow */
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    
+    backdrop-filter: blur(3px);
 }
+
 
 .recipe-card h3 {
     margin-top: 0;
