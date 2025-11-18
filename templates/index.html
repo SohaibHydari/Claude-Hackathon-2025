@@ -17,7 +17,7 @@
 
     <h1>Fridge Roulette</h1>
     <div class="subtitle">
-        Upload or drop a photo of your fridge — Chef AI will cook up ideas!
+        Upload your fridge chaos — we’ll work the magic ✨
     </div>
 
     <!-- Upload / Dropzone -->
@@ -58,7 +58,11 @@
             const status = document.getElementById("status");
             const resultsDiv = document.getElementById("results");
 
-            status.textContent = "Analyzing your fridge… 🔍🍳";
+            status.innerHTML = `
+                <div class="loading-spinner">🥘</div>
+                <div>Analyzing your fridge…</div>
+            `;
+
             resultsDiv.style.display = "none";
             resultsDiv.innerHTML = "";
 
@@ -114,7 +118,7 @@
                     // === RECIPES YOU CAN MAKE NOW ===
                     html += `
                         <div class="recipes-section">
-                            <h2>✅ Recipes You Can Make Now</h2>
+                            <h2>🍽️ Recipes You Can Make Now</h2>
                             <div class="recipe-grid">
                     `;
 

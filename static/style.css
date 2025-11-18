@@ -71,7 +71,7 @@ h1 {
 }
 
 /* ============================
-   RESULTS SECTION
+   RESULTS AREA
 ============================ */
 .results {
     width: 90%;
@@ -85,29 +85,23 @@ h1 {
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: 40px;
+    align-items: flex-start;
 }
 
-/* RIGHT SIDE WRAPPER */
-.main-right {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-/* Helpful generic text */
-.empty-text {
-    font-size: 14px;
-    color: #7b5b3a;
-    font-style: italic;
-}
-
-/* INGREDIENT SIDEBAR */
+/* ============================
+   LEFT: INGREDIENT SIDEBAR
+============================ */
 .ingredients-box {
-    background: #fffefb;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 244, 230, 0.93),
+        rgba(255, 244, 230, 0.55)
+    );
     padding: 20px;
     border-radius: 20px;
-    border: 1px solid #ecdac6;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    border: 1px solid rgba(224, 180, 140, 0.4);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    backdrop-filter: blur(3px);
 }
 
 .ingredients-box h2 {
@@ -131,14 +125,24 @@ h1 {
 }
 
 /* ============================
-   RECIPES YOU CAN MAKE NOW
+   RIGHT SIDE LAYOUT
 ============================ */
-.recipes-section h2 {
-    font-size: 24px;
-    margin-top: 0;
-    margin-bottom: 10px;
+.main-right {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
 }
 
+/* SECTION HEADERS */
+.main-right h2 {
+    margin-bottom: 10px;
+    font-size: 26px;
+    color: #7c4a1c;
+}
+
+/* ============================
+   RECIPES YOU CAN MAKE NOW
+============================ */
 .recipe-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -149,7 +153,6 @@ h1 {
     padding: 22px;
     border-radius: 18px;
 
-    /* warm parchment gradient fade */
     background: linear-gradient(
         to bottom right,
         rgba(255, 244, 230, 0.95),
@@ -157,13 +160,9 @@ h1 {
     );
 
     border: 1px solid rgba(224, 180, 140, 0.4);
-
-    /* softer shadow */
     box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-    
     backdrop-filter: blur(3px);
 }
-
 
 .recipe-card h3 {
     margin-top: 0;
@@ -175,75 +174,66 @@ h1 {
     margin: 5px 0 10px;
 }
 
-.recipe-card ul,
-.recipe-card ol {
-    margin: 5px 0 10px 20px;
-}
-
 /* ============================
-   STRETCH / UPGRADE RECIPES
+   UPGRADE IDEAS (stretch recipes)
 ============================ */
 .stretch-section {
-    background: #fffaf0;
-    padding: 20px;
-    border-radius: 20px;
-    border: 1px solid #f0d4aa;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
-}
-
-.stretch-section h2 {
-    margin-top: 0;
-    margin-bottom: 5px;
-    font-size: 22px;
+    margin-top: 10px;
 }
 
 .stretch-subtitle {
-    margin-top: 0;
+    margin-top: -5px;
     margin-bottom: 15px;
-    color: #7b5b3a;
+    color: #6d4b2f;
 }
 
 .stretch-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 20px;
+    gap: 25px;
 }
 
 .stretch-card {
-    background: #fffdf7;
-    padding: 18px;
+    padding: 22px;
     border-radius: 18px;
-    border: 1px solid #f1d5b0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 244, 230, 0.92),
+        rgba(255, 244, 230, 0.50)
+    );
+
+    border: 1px solid rgba(224, 180, 140, 0.4);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    backdrop-filter: blur(3px);
 }
 
 .stretch-card h3 {
     margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 19px;
-}
-
-.stretch-card p {
-    margin: 5px 0 10px;
-}
-
-.stretch-card ul,
-.stretch-card ol {
-    margin: 5px 0 10px 20px;
 }
 
 /* ============================
-   RESPONSIVE
+   MISC
 ============================ */
-@media (max-width: 900px) {
-    .dropzone {
-        width: 90%;
-        height: 260px;
-    }
+.empty-text {
+    color: #8a6a45;
+    font-size: 15px;
+    margin-top: 10px;
+}
 
-    .results-grid {
-        grid-template-columns: 1fr;
-    }
+ul, ol {
+    margin-top: 8px;
+}
+.loading-spinner {
+    font-size: 40px;
+    animation: spin 1s linear infinite;
+    display: block;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Fade animation */
